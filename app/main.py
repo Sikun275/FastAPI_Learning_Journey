@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, status
 from pydantic import BaseModel
 from typing import List, Optional
 
@@ -21,15 +21,30 @@ def create_task(task: Task):
     tasks_db.append(task.dict())
     return task
 
+@app.post("/token")
+def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
+    # Validate user credentials
+    # Return JWT token
+
 # root point 
 @app.get("/")
 def home():
-    return {"message": "Welcome to the Task Manager API!"}
+    return {"message": "Welcome to the my FastAPI learning homepage!"}
 
 # get all tasks
 @app.get("/tasks", response_model=List[Task])
 def get_tasks():
     return tasks_db
+
+@app.get("/tasks/{task_id}")
+def read_task(task_id: int, db: Session = Depends(get_db)):
+    task = db.query(models.TaskModel).filter(models.TaskModel.id == task_id).first()
+    if not task:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Task {task_id} not found"
+        )
+    return task
 
 # get a task by id
 @app.get("/tasks/{task_id}", response_model=Task)
